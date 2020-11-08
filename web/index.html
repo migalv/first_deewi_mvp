@@ -28,6 +28,27 @@
       });
     }
   </script>
+  <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+
+  <!-- Firebase Configuration -->
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCpyIPUyUzEU8SGK1Z6i-UX-VD1kIlgPSE",
+        authDomain: "first-mvp-deewi.firebaseapp.com",
+        databaseURL: "https://first-mvp-deewi.firebaseio.com",
+        projectId: "first-mvp-deewi",
+        storageBucket: "first-mvp-deewi.appspot.com",
+        messagingSenderId: "1039433043737",
+        appId: "1:1039433043737:web:a7c975682b3b298ffabf88",
+        measurementId: "G-90QH5PP11R"
+      };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
   <script src="main.dart.js" type="application/javascript"></script>
 </body>
 </html>
