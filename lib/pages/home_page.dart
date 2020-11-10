@@ -1,17 +1,20 @@
 import 'package:first_deewi_mvp/data.dart' as data;
+import 'package:first_deewi_mvp/pages/cart_page.dart';
+import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:first_deewi_mvp/widgets/cart_button.dart';
 import 'package:first_deewi_mvp/widgets/cart_fab.dart';
 import 'package:first_deewi_mvp/widgets/cuisine_card.dart';
 import 'package:flutter/material.dart';
+import 'package:states_rebuilder/states_rebuilder.dart';
 
-class CuisinesListPage extends StatefulWidget {
+class HomePage extends StatefulWidget {
   // Screen types
   @override
-  _CuisinesListPageState createState() => _CuisinesListPageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _CuisinesListPageState extends State<CuisinesListPage> {
-  bool _isTablet;
+class _HomePageState extends State<HomePage> {
+  bool _isWeb;
 
   double _screenWidth;
   double _screenHeight;
@@ -36,7 +39,7 @@ class _CuisinesListPageState extends State<CuisinesListPage> {
     // Number of cuisines cards per row in the Grid View
     _cardsPerRow = 3;
 
-    _isTablet = false;
+    _isWeb = true;
 
     _bannerHeight = _screenHeight * 0.4;
 
@@ -51,19 +54,27 @@ class _CuisinesListPageState extends State<CuisinesListPage> {
     _crossAxisAlignment = CrossAxisAlignment.start;
     _lateralPadding = 64.0;
 
-    if (_screenWidth < 1100 && _screenWidth >= 560) {
+    // Tablet
+    if (_screenWidth <= 1024 && _screenWidth > 768) {
+      _isWeb = false;
       _cardsPerRow = 2;
-    } else if (_screenWidth < 560) {
-      _cardsPerRow = 1;
+    } // Phone
+    else if (_screenWidth <= 768) {
+      _isWeb = false;
+      _cardsPerRow = 2;
+      _crossAxisAlignment = CrossAxisAlignment.center;
       _titleTextStyle =
           Theme.of(context).textTheme.headline4.copyWith(fontSize: 24.0);
-      _crossAxisAlignment = CrossAxisAlignment.center;
-    }
-
-    // Tablet
-    if (_screenWidth <= 768) {
+      _horizontalPadding = 24.0;
       _lateralPadding = 32.0;
-      _isTablet = true;
+
+      if (_screenWidth < 650 && _screenWidth >= 450) {
+        _cardsPerRow = 1;
+      } else if (_screenWidth < 450) {
+        _cardsPerRow = 1;
+        _horizontalPadding = 16.0;
+        _lateralPadding = 0.0;
+      }
     }
 
     return Scaffold(
@@ -77,7 +88,6 @@ class _CuisinesListPageState extends State<CuisinesListPage> {
               fit: BoxFit.cover,
             ),
             _buildLogo(),
-            CartButton(),
             ListView(
               shrinkWrap: true,
               primary: true,
@@ -86,6 +96,8 @@ class _CuisinesListPageState extends State<CuisinesListPage> {
                 _buildCuisineList(),
               ],
             ),
+            CartPage(),
+            CartButton(),
           ],
         ),
       ),
@@ -94,9 +106,9 @@ class _CuisinesListPageState extends State<CuisinesListPage> {
   }
 
   Widget _buildLogo() => Align(
-        alignment: _isTablet ? Alignment.topCenter : Alignment.topLeft,
+        alignment: !_isWeb ? Alignment.topCenter : Alignment.topLeft,
         child: Padding(
-          padding: _isTablet
+          padding: !_isWeb
               ? EdgeInsets.all(64.0)
               : EdgeInsets.only(top: 64.0, left: 64.0),
           child: Hero(

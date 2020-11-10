@@ -1,5 +1,7 @@
 import 'package:first_deewi_mvp/pages/cart_page.dart';
+import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:flutter/material.dart';
+import 'package:states_rebuilder/states_rebuilder.dart';
 
 class CartFAB extends StatelessWidget {
   @override
@@ -11,17 +13,45 @@ class CartFAB extends StatelessWidget {
     if (_screenWidth < 768.0) _isPhone = true;
 
     return _isPhone || _isTablet
-        ? FloatingActionButton(
-            backgroundColor: Colors.amber,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CartPage()),
-            ),
-            child: Icon(
-              Icons.shopping_cart,
-              size: 32.0,
-              color: Colors.white,
-            ),
+        ? StateBuilder<Cart>(
+            observe: () => Injector.getAsReactive<Cart>(),
+            builder: (_, rmCart) {
+              int cartItems = rmCart.state.dishes.length;
+              return FloatingActionButton(
+                backgroundColor: Colors.amber,
+                onPressed: () =>
+                    rmCart.setState((cart) => cart.toggleCartVisibility()),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        Icons.shopping_cart,
+                        size: 32.0,
+                        color: Colors.white,
+                      ),
+                    ),
+                    cartItems >= 1
+                        ? Positioned(
+                            top: 4.0,
+                            right: 8.0,
+                            child: Material(
+                              color: Colors.white,
+                              elevation: 2,
+                              shape: CircleBorder(),
+                              child: Container(
+                                width: 16.0,
+                                child: Text(
+                                  "$cartItems",
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(),
+                  ],
+                ),
+              );
+            },
           )
         : Container();
   }

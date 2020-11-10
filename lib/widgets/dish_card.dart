@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 
 class DishCard extends StatelessWidget {
   final Dish dish;
+  final bool isClickable;
 
   const DishCard({
     Key key,
     @required this.dish,
+    this.isClickable = true,
   }) : super(key: key);
 
   final double _borderRadius = 8.0;
@@ -21,12 +23,22 @@ class DishCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: InkWell(
           borderRadius: BorderRadius.circular(_borderRadius),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DishPage(dish: dish),
-            ),
-          ),
+          onTap: isClickable
+              ? () => showDialog(
+                    context: context,
+                    builder: (_) {
+                      return Dialog(
+                        insetPadding: MediaQuery.of(context).size.width <= 768.0
+                            ? const EdgeInsets.all(0.0)
+                            : const EdgeInsets.symmetric(
+                                horizontal: 40.0,
+                                vertical: 24.0,
+                              ),
+                        child: DishPage(dish: dish),
+                      );
+                    },
+                  )
+              : null,
           child: Ink(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(_borderRadius),

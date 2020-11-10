@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:first_deewi_mvp/models/dish_model.dart';
 import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:flutter/material.dart';
@@ -5,69 +7,125 @@ import 'package:states_rebuilder/states_rebuilder.dart';
 
 class ItemTile extends StatelessWidget {
   final Dish dish;
+  final int units;
   final bool isModifyable;
 
   const ItemTile({
     Key key,
     @required this.dish,
+    @required this.units,
     this.isModifyable = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      height: 88.0,
+      width: 88.0,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.0),
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: Offset(-3, 3),
-            ),
-          ]),
-      child: Row(
-        children: [
-          Container(
-            margin: const EdgeInsets.all(8.0),
-            height: 80.0,
-            width: 80.0,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8.0),
-              image: DecorationImage(
-                image: AssetImage(dish.imagePath),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Expanded(child: Text("${dish.name}")),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                Text("${dish.priceAsString}€"),
-                isModifyable
-                    ? StateBuilder<Cart>(
-                        observe: () => Injector.getAsReactive<Cart>(),
-                        builder: (context, rmCart) {
-                          return IconButton(
-                            onPressed: () => rmCart.setState(
-                                (cart) => cart.removeDishFromCart(dish)),
-                            icon: Icon(
-                              Icons.delete,
-                              size: 32.0,
-                              color: Colors.black87,
-                            ),
-                          );
-                        })
-                    : Container(),
-              ],
-            ),
+        borderRadius: BorderRadius.circular(8.0),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: Offset(-3, 3),
           ),
         ],
       ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 80.0,
+              width: 80.0,
+              margin: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.0),
+                image: DecorationImage(
+                  image: AssetImage(dish.imagePath),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      "${dish.name}",
+                      style: Theme.of(context).textTheme.subtitle1,
+                    ),
+                  ),
+                  Text(
+                    "${dish.priceAsString}€",
+                    style: Theme.of(context).textTheme.caption,
+                  ),
+                ],
+              ),
+            ),
+            _buildUnitCounter(),
+          ],
+        ),
+      ),
     );
   }
+
+  Widget _buildUnitCounter() => Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: isModifyable
+              ? StateBuilder<Cart>(
+                  observe: () => Injector.getAsReactive<Cart>(),
+                  builder: (context, rmCart) => Row(
+                    children: [
+                      Material(
+                        elevation: 3,
+                        shape: CircleBorder(),
+                        child: InkWell(
+                          onTap: () => rmCart
+                              .setState((cart) => cart.addDishToCart(dish)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2.0),
+                            child: Ink(
+                              child: Icon(
+                                Icons.add,
+                                size: 20.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text("$units"),
+                      ),
+                      Material(
+                        elevation: 3,
+                        shape: CircleBorder(),
+                        child: InkWell(
+                          onTap: () => rmCart.setState(
+                              (cart) => cart.removeDishFromCart(dish)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2.0),
+                            child: Ink(
+                              child: Icon(
+                                Icons.remove,
+                                size: 20.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Container(),
+        ),
+      );
 }

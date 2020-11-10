@@ -1,5 +1,5 @@
 import 'package:first_deewi_mvp/models/cuisine_model.dart';
-import 'package:first_deewi_mvp/pages/dishes_list_page.dart';
+import 'package:first_deewi_mvp/pages/cuisine_page.dart';
 import 'package:flutter/material.dart';
 
 class CuisineCard extends StatelessWidget {
@@ -19,7 +19,7 @@ class CuisineCard extends StatelessWidget {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => DishesListPage(
+              builder: (_) => CuisinePage(
                 cuisine: cuisine,
                 dishes: cuisine.dishes,
               ),

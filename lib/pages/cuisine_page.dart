@@ -1,23 +1,24 @@
 import 'package:first_deewi_mvp/models/cuisine_model.dart';
 import 'package:first_deewi_mvp/models/dish_model.dart';
-import 'package:first_deewi_mvp/pages/cuisines_list_page.dart';
+import 'package:first_deewi_mvp/pages/cart_page.dart';
+import 'package:first_deewi_mvp/pages/home_page.dart';
 import 'package:first_deewi_mvp/widgets/cart_button.dart';
 import 'package:first_deewi_mvp/widgets/cart_fab.dart';
 import 'package:first_deewi_mvp/widgets/dish_card.dart';
 import 'package:flutter/material.dart';
 
-class DishesListPage extends StatefulWidget {
+class CuisinePage extends StatefulWidget {
   final List<Dish> dishes;
   final Cuisine cuisine;
 
-  const DishesListPage({Key key, @required this.cuisine, @required this.dishes})
+  const CuisinePage({Key key, @required this.cuisine, @required this.dishes})
       : super(key: key);
 
   @override
-  _DishesListPageState createState() => _DishesListPageState();
+  _CuisinePageState createState() => _CuisinePageState();
 }
 
-class _DishesListPageState extends State<DishesListPage> {
+class _CuisinePageState extends State<CuisinePage> {
   double _screenWidth;
   double _screenHeight;
 
@@ -68,15 +69,6 @@ class _DishesListPageState extends State<DishesListPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Container(
-          //   width: double.infinity,
-          //   decoration: BoxDecoration(
-          //     image: DecorationImage(
-          //       image: AssetImage(widget.cuisine.imagePath),
-          //       fit: BoxFit.cover,
-          //     ),
-          //   ),
-          // ),
           Image.asset(
             widget.cuisine.imagePath,
             width: _screenWidth,
@@ -85,8 +77,9 @@ class _DishesListPageState extends State<DishesListPage> {
           ),
           _buildLogo(),
           _buildTitle(),
-          CartButton(),
           _buildListView(),
+          CartPage(),
+          CartButton(),
         ],
       ),
       floatingActionButton: CartFAB(),
@@ -103,9 +96,7 @@ class _DishesListPageState extends State<DishesListPage> {
           child: InkWell(
             onTap: () => Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (_) => CuisinesListPage(),
-              ),
+              MaterialPageRoute(builder: (_) => HomePage()),
             ),
             child: Ink(
               child: Padding(

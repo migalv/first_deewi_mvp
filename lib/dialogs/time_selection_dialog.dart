@@ -82,19 +82,7 @@ class _TimeSelectionDialogState extends State<TimeSelectionDialog> {
               RaisedButton(
                 color: Colors.blue,
                 onPressed: _selectedTime != null
-                    ? widget.errorText != null
-                        ? () => Navigator.of(context).pop(_selectedTime)
-                        : () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => OrderConfirmationPage(
-                                  orderTime: _selectedTime,
-                                ),
-                              ),
-                            );
-                          }
+                    ? () => Navigator.of(context).pop(_selectedTime)
                     : null,
                 child: Text(
                   "Confirm",

@@ -1,55 +1,199 @@
-import 'package:first_deewi_mvp/dialogs/time_selection_dialog.dart';
+import 'package:first_deewi_mvp/pages/order_confirmation_page.dart';
 import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:first_deewi_mvp/widgets/item_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:states_rebuilder/states_rebuilder.dart';
 
-class CartPage extends StatelessWidget {
+class CartPage extends StatefulWidget {
+  @override
+  _CartPageState createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
+  AnimationController _controller;
+  Animation<double> _animation;
+
+  initState() {
+    super.initState();
+    _controller = AnimationController(
+        duration: const Duration(milliseconds: 200), vsync: this);
+    _animation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic);
+
+    _controller.forward();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Your Cart"),
-      ),
-      body: SafeArea(
-        child: StateBuilder<Cart>(
-            observe: () => Injector.getAsReactive<Cart>(),
-            builder: (context, rmCart) {
-              return rmCart.state.dishes.isNotEmpty
-                  ? Column(
-                      children: [
-                        Expanded(
-                          child: ListView(
-                            children: rmCart.state.dishes
-                                .map((dish) => ItemTile(dish: dish))
-                                .toList(),
-                          ),
-                        ),
-                        Text(
-                          "Total: ${rmCart.state.totalPriceString}€",
-                          style: Theme.of(context).textTheme.headline5,
+    double _screenWidth = MediaQuery.of(context).size.width;
+    double _screenHeight = MediaQuery.of(context).size.height;
+    double _containerWidth = 352.0;
+    double _containerHeight = _screenHeight * 0.7;
+    double _latteralMargin = 32.0;
+    bool _isWeb = true;
+
+    if (_screenWidth <= 1024.0) _isWeb = false;
+    if (_screenWidth <= 352.0 + _latteralMargin * 2) {
+      _containerWidth = _screenWidth;
+      _latteralMargin = 16.0;
+    }
+
+    return Align(
+      alignment: _isWeb ? Alignment.topRight : Alignment.bottomRight,
+      child: StateBuilder<Cart>(
+        observe: () => Injector.getAsReactive<Cart>(),
+        builder: (context, rmCart) {
+          return rmCart.state.isCartVisible
+              ? ScaleTransition(
+                  scale: _animation,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: _containerWidth,
+                      maxHeight: _containerHeight,
+                    ),
+                    margin: EdgeInsets.symmetric(
+                      vertical: 32.0,
+                      horizontal: _latteralMargin,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black87,
+                          spreadRadius: 1,
+                          blurRadius: 3,
                         ),
                       ],
-                    )
-                  : Center(
-                      child: Text("No dishes added"),
-                    );
-            }),
-      ),
-      floatingActionButton: StateBuilder<Cart>(
-          observe: () => Injector.getAsReactive<Cart>(),
-          builder: (context, rmCart) {
-            return rmCart.state.dishes.isNotEmpty
-                ? FloatingActionButton.extended(
-                    onPressed: () => showDialog(
-                      context: context,
-                      child: TimeSelectionDialog(),
                     ),
-                    label: Text("Order"),
-                    icon: Icon(Icons.shopping_cart),
-                  )
-                : Container();
-          }),
+                    child: Column(
+                      children: [
+                        _buildTitle(rmCart),
+                        _buildItemsList(rmCart),
+                        rmCart.state.dishes.isNotEmpty
+                            ? _buildTotal(rmCart)
+                            : Container(),
+                      ],
+                    ),
+                  ),
+                )
+              : Container();
+        },
+      ),
     );
   }
+
+  Widget _buildItemsList(ReactiveModel rmCart) => Expanded(
+        child: rmCart.state.dishes.isNotEmpty
+            ? ListView(
+                children: rmCart.state.dishes.entries
+                    .map(
+                      (entry) => ItemTile(
+                        dish: entry.key,
+                        units: entry.value,
+                      ),
+                    )
+                    .cast<Widget>()
+                    .toList(),
+              )
+            : _buildPlaceHolder(),
+      );
+
+  Widget _buildTitle(ReactiveModel rmCart) => Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: IconButton(
+              onPressed: () =>
+                  rmCart.setState((cart) => cart.toggleCartVisibility()),
+              iconSize: 32.0,
+              icon: Icon(Icons.close),
+            ),
+          ),
+          SizedBox(width: 88.0),
+          Text(
+            "Cart",
+            style: Theme.of(context).textTheme.headline4,
+          ),
+        ],
+      );
+
+  Widget _buildTotal(ReactiveModel rmCart) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              "Total: ${rmCart.state.totalPriceString}€",
+              style: Theme.of(context).textTheme.headline5,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Material(
+              child: InkWell(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => OrderConfirmationPage(),
+                  ),
+                ),
+                child: Ink(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 40.0),
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.payment,
+                        color: Colors.white,
+                        size: 24.0,
+                      ),
+                      SizedBox(width: 8.0),
+                      Text(
+                        "Pay",
+                        style: Theme.of(context)
+                            .textTheme
+                            .headline5
+                            .copyWith(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+
+  Widget _buildPlaceHolder() => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(64.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Go add your favorite dishes and come back here to order",
+                style: Theme.of(context).textTheme.subtitle1,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16.0),
+              Image.asset(
+                "assets/icons/carro-vacio.png",
+              ),
+              SizedBox(height: 8.0),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Text(
+                  "Empty cart",
+                  style: Theme.of(context).textTheme.headline6,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }

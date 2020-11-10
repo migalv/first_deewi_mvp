@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:first_deewi_mvp/dialogs/time_selection_dialog.dart';
 import 'package:first_deewi_mvp/js/location.dart';
-import 'package:first_deewi_mvp/pages/cuisines_list_page.dart';
+import 'package:first_deewi_mvp/pages/home_page.dart';
 import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:first_deewi_mvp/widgets/item_tile.dart';
 import 'package:flutter/material.dart';
@@ -11,16 +11,12 @@ import 'package:states_rebuilder/states_rebuilder.dart';
 import "dart:math";
 
 class OrderConfirmationPage extends StatefulWidget {
-  final String orderTime;
-
-  OrderConfirmationPage({Key key, @required this.orderTime}) : super(key: key);
-
   @override
-  _OrderConfirmationPageState createState() =>
-      _OrderConfirmationPageState(orderTime);
+  _OrderConfirmationPageState createState() => _OrderConfirmationPageState();
 }
 
 class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
+  String _orderTime;
   final _formKey = GlobalKey<FormState>();
 
   final _maskFormatter = MaskTextInputFormatter(
@@ -38,18 +34,11 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   bool _isLoading = false;
 
-  String _orderTime;
-
   GeolocationPosition _userLocation;
-
-  _OrderConfirmationPageState(orderTime) : _orderTime = orderTime;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Confirm order"),
-      ),
       body: ListView(
         children: [
           _buildOrderDetails(context),
@@ -165,11 +154,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           ),
         ];
 
-        children.addAll(cart.dishes.map(
-          (dish) => Padding(
+        children.addAll(cart.dishes.entries.map(
+          (entry) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: ItemTile(
-              dish: dish,
+              dish: entry.key,
+              units: entry.value,
               isModifyable: false,
             ),
           ),
@@ -224,12 +214,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       double distance =
           _calculateDistanceInMeters(userLat, userLon, centerLat, centerLon);
 
-      print("Distance: $distance");
-      print("CenterLat: $centerLat");
-      print("CenterLon: $centerLon");
-      print("UserLat: $userLat");
-      print("UserLon: $userLon");
-
       if (distance > maxDistance) return Response.NOT_IN_BOUNDS;
 
       Map<String, bool> availableTimes =
@@ -238,7 +222,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       if (availableTimes[_orderTime]) {
         _firestore.collection("orders").doc().set(
           {
-            "items": rmCart.state.dishes.map((dish) => dish.toJson()).toList(),
+            "items": rmCart.state.dishes.entries
+                .map((entry) => entry.key.toJson())
+                .toList(),
             "created_at": DateTime.now().millisecondsSinceEpoch,
             "delivery_time": _orderTime,
             "client_address": _addressController.text,
@@ -284,7 +270,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => CuisinesListPage(),
+            builder: (_) => HomePage(),
           ),
         );
         break;

@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:first_deewi_mvp/data.dart' as data;
-import 'package:first_deewi_mvp/pages/cuisines_list_page.dart';
-import 'package:first_deewi_mvp/pages/dishes_list_page.dart';
+import 'package:first_deewi_mvp/pages/cuisine_page.dart';
+import 'package:first_deewi_mvp/pages/home_page.dart';
 import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:flutter/material.dart';
 import 'package:states_rebuilder/states_rebuilder.dart';
@@ -22,10 +22,10 @@ class MyApp extends StatelessWidget {
           Inject<Cart>(() => Cart()),
         ],
         builder: (_) =>
-            // DishesListPage(
-            //     cuisine: data.cuisines[1], dishes: data.cuisines[1].dishes),
             // TODO CHANGE
-            CuisinesListPage(),
+            // CuisinePage(
+            //     cuisine: data.cuisines[1], dishes: data.cuisines[1].dishes),
+            HomePage(),
       ),
     );
   }
