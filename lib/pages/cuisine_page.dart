@@ -45,6 +45,7 @@ class _CuisinePageState extends State<CuisinePage> {
           color: Colors.white.withOpacity(0.8),
         );
 
+    // WEB
     if (_screenWidth >= 1024) {
       _lateralPadding = 128.0;
       _bottomPadding = 32.0;

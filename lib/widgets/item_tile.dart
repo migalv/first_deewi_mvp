@@ -20,9 +20,9 @@ class ItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 88.0,
-      width: 88.0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      height: 96.0,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8.0),
         color: Colors.white,
@@ -42,7 +42,6 @@ class ItemTile extends StatelessWidget {
             Container(
               height: 80.0,
               width: 80.0,
-              margin: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8.0),
                 image: DecorationImage(
@@ -51,6 +50,7 @@ class ItemTile extends StatelessWidget {
                 ),
               ),
             ),
+            SizedBox(width: 8.0),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,63 +69,69 @@ class ItemTile extends StatelessWidget {
                 ],
               ),
             ),
-            _buildUnitCounter(),
+            _buildUnitCounter(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildUnitCounter() => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: isModifyable
-              ? StateBuilder<Cart>(
-                  observe: () => Injector.getAsReactive<Cart>(),
-                  builder: (context, rmCart) => Row(
-                    children: [
-                      Material(
-                        elevation: 3,
-                        shape: CircleBorder(),
-                        child: InkWell(
-                          onTap: () => rmCart
-                              .setState((cart) => cart.addDishToCart(dish)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(2.0),
-                            child: Ink(
-                              child: Icon(
-                                Icons.add,
-                                size: 20.0,
-                              ),
-                            ),
+  Widget _buildUnitCounter(BuildContext context) => isModifyable
+      ? Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: StateBuilder<Cart>(
+              observe: () => Injector.getAsReactive<Cart>(),
+              builder: (context, rmCart) => Row(
+                children: [
+                  Material(
+                    elevation: 3,
+                    shape: CircleBorder(),
+                    child: InkWell(
+                      onTap: () =>
+                          rmCart.setState((cart) => cart.addDishToCart(dish)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: Ink(
+                          child: Icon(
+                            Icons.add,
+                            size: 20.0,
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text("$units"),
-                      ),
-                      Material(
-                        elevation: 3,
-                        shape: CircleBorder(),
-                        child: InkWell(
-                          onTap: () => rmCart.setState(
-                              (cart) => cart.removeDishFromCart(dish)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(2.0),
-                            child: Ink(
-                              child: Icon(
-                                Icons.remove,
-                                size: 20.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                )
-              : Container(),
-        ),
-      );
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text("$units"),
+                  ),
+                  Material(
+                    elevation: 3,
+                    shape: CircleBorder(),
+                    child: InkWell(
+                      onTap: () => rmCart
+                          .setState((cart) => cart.removeDishFromCart(dish)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: Ink(
+                          child: Icon(
+                            Icons.remove,
+                            size: 20.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        )
+      : Align(
+          alignment: Alignment.bottomRight,
+          child: Text(
+            "ud${units > 1 ? "s" : ""}: $units",
+            style: Theme.of(context).textTheme.caption,
+          ),
+        );
 }
