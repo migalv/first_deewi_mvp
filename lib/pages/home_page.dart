@@ -1,11 +1,9 @@
 import 'package:first_deewi_mvp/data.dart' as data;
 import 'package:first_deewi_mvp/pages/cart_page.dart';
-import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:first_deewi_mvp/widgets/cart_button.dart';
 import 'package:first_deewi_mvp/widgets/cart_fab.dart';
 import 'package:first_deewi_mvp/widgets/cuisine_card.dart';
 import 'package:flutter/material.dart';
-import 'package:states_rebuilder/states_rebuilder.dart';
 
 class HomePage extends StatefulWidget {
   // Screen types
@@ -152,7 +150,7 @@ class _HomePageState extends State<HomePage> {
               Container(
                 margin: const EdgeInsets.only(bottom: 16.0),
                 child: Text(
-                  "Choose your favorite cuisine",
+                  "Con que comida te atreves hoy?",
                   style: _titleTextStyle,
                   textAlign: TextAlign.center,
                 ),

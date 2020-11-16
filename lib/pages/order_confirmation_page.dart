@@ -1,14 +1,14 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:first_deewi_mvp/data.dart';
 import 'package:first_deewi_mvp/dialogs/time_selection_dialog.dart';
 import 'package:first_deewi_mvp/js/location.dart';
-import 'package:first_deewi_mvp/models/dish_model.dart';
 import 'package:first_deewi_mvp/pages/home_page.dart';
 import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:first_deewi_mvp/widgets/item_tile.dart';
+import 'package:first_deewi_mvp/widgets/my_box_shadow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:js/js.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:states_rebuilder/states_rebuilder.dart';
 import "dart:math";
@@ -20,14 +20,8 @@ class OrderConfirmationPage extends StatefulWidget {
 
 class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   String _orderTime;
-  final _formKey = GlobalKey<FormState>();
 
-  // TODO REMOVE
-  final _orderItems = {
-    japaneseDishes[0]: 1,
-    japaneseDishes[1]: 2,
-    japaneseDishes[2]: 3,
-  };
+  Map<String, bool> _availableTimes;
 
   final _maskFormatter = MaskTextInputFormatter(
     mask: '### ## ## ##',
@@ -42,16 +36,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   final TextEditingController _emailController = TextEditingController();
 
-  bool _isLoading = false;
+  bool _isTimeTableLoading;
+  bool _isPaymentProcessing;
+
+  String _deliveryDay = "Domingo 19";
 
   GeolocationPosition _userLocation;
-
-  BoxShadow _defaultBoxShadow = BoxShadow(
-    color: Colors.grey.withOpacity(0.5),
-    spreadRadius: 2,
-    blurRadius: 3,
-    offset: Offset(0.0, 3.0),
-  );
 
   TextStyle _titleTextStyle;
 
@@ -79,6 +69,15 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   double _screenHeight;
 
   bool _isWeb;
+
+  @override
+  void initState() {
+    _isTimeTableLoading = true;
+    _isPaymentProcessing = false;
+    _loadDeliverySchedule()
+        .then((_) => setState(() => _isTimeTableLoading = false));
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -304,24 +303,25 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           ),
           _buildTextField(
             controller: _nameController,
-            label: "Name",
+            label: "Nombre",
             icon: Icon(Icons.person),
             keyboardType: TextInputType.name,
             validator: (value) {
-              if (value.isEmpty) return 'Please enter a name';
+              if (value.isEmpty) return 'Porfavor introduce un nombre';
               return null;
             },
           ),
           _buildTextField(
             controller: _phoneController,
-            label: "Phone",
+            label: "Telefono",
             icon: Icon(Icons.phone),
             keyboardType: TextInputType.phone,
             inputFormatters: [_maskFormatter],
             validator: (value) {
-              if (value.isEmpty) return 'Please enter a phone';
+              if (value.isEmpty)
+                return 'Porfavor introduce un número de telefono';
               if (_maskFormatter.getUnmaskedText().length < 9)
-                return 'Please enter a valid phone';
+                return 'Porfavor introduce un número válido';
               return null;
             },
           ),
@@ -331,9 +331,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             icon: Icon(Icons.email),
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
-              if (value.isEmpty) return 'Please enter an email';
+              if (value.isEmpty) return 'Porfavor introduce tu email';
               final regExp = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
-              if (!regExp.hasMatch(value)) return 'Please enter a valid email';
+              if (!regExp.hasMatch(value))
+                return 'Porfavor introduce un email válido';
 
               return null;
             },
@@ -398,7 +399,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 ),
                 keyboardType: TextInputType.streetAddress,
                 validator: (value) {
-                  if (value.isEmpty) return 'Please enter an address';
+                  if (value.isEmpty) return 'Porfavor introduce una dirección';
                   return null;
                 },
               ),
@@ -409,10 +410,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   Widget _buildOrderDetailsContainer({double containerWidth}) => Container(
         width: containerWidth,
-        margin: EdgeInsets.symmetric(
-          vertical: 32.0,
-          // horizontal: rightColumnHorizontalMargin,
-        ),
+        margin: EdgeInsets.symmetric(vertical: 32.0),
         padding: const EdgeInsets.symmetric(
           vertical: 16.0,
           horizontal: 24.0,
@@ -421,11 +419,40 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
-            _defaultBoxShadow,
+            myBoxShadow,
           ],
         ),
         child: StateBuilder<Cart>(
             observe: () => Injector.getAsReactive<Cart>(),
+            initState: (_, rmCart) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Tu pedido",
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline6
+                          .copyWith(fontSize: 26.0),
+                    ),
+                    Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "TOTAL",
+                          style: Theme.of(context).textTheme.headline5,
+                        ),
+                        Text(
+                          "",
+                          style: Theme.of(context).textTheme.headline6,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
             builder: (_, rmCart) {
               List<Widget> children = [
                 Text(
@@ -437,9 +464,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 )
               ];
 
-              // TODO CHANGE TO rm.dishes
               // We add the items from the order
-              children.addAll(_orderItems.entries
+              children.addAll(rmCart.state.dishes.entries
                   .map((entry) => ItemTile(
                         dish: entry.key,
                         units: entry.value,
@@ -457,13 +483,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                       "TOTAL",
                       style: Theme.of(context).textTheme.headline5,
                     ),
-                    // TODO HACER DINAMICO
                     Text(
-                      "25,69€",
+                      "${rmCart.state.totalPriceString} €",
                       style: Theme.of(context).textTheme.headline6,
                     ),
                   ],
                 ),
+                _buildPayButton(),
               ]);
 
               return Column(
@@ -472,6 +498,45 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 children: children,
               );
             }),
+      );
+
+  Widget _buildPayButton() => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Material(
+            child: InkWell(
+              onTap: () => _sendOrderDetails(),
+              child: Ink(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 40.0),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.payment,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    SizedBox(width: 8.0),
+                    _isPaymentProcessing
+                        ? Center(child: CircularProgressIndicator())
+                        : Text(
+                            "Pagar",
+                            style: Theme.of(context)
+                                .textTheme
+                                .headline5
+                                .copyWith(color: Colors.white),
+                          ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       );
 
   Widget _buildTitle() => Row(
@@ -520,30 +585,27 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
-          _defaultBoxShadow,
+          myBoxShadow,
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            // TODO HACER DINAMICO
-            "Domingo 19",
+            _deliveryDay,
             style: Theme.of(context).textTheme.headline6,
           ),
-          Expanded(
-            child: Wrap(
-              runAlignment: WrapAlignment.spaceEvenly,
-              children: [
-                // TODO HACER DINAMICO
-                _buildTimeChip("20:00", true),
-                _buildTimeChip("20:45", true),
-                _buildTimeChip("21:30", true),
-                _buildTimeChip("22:15", true),
-                _buildTimeChip("23:00", true),
-              ],
-            ),
-          ),
+          _isTimeTableLoading
+              ? Center(child: CircularProgressIndicator())
+              : Expanded(
+                  child: Wrap(
+                    runAlignment: WrapAlignment.spaceEvenly,
+                    children: _availableTimes.entries
+                        .map((entry) => _buildTimeChip(entry.key, entry.value))
+                        .cast<Widget>()
+                        .toList(),
+                  ),
+                ),
         ],
       ),
     );
@@ -557,14 +619,15 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           elevation: 2,
           borderRadius: BorderRadius.circular(8.0),
           child: InkWell(
-            onTap: isAvailable
-                ? () {
-                    // TODO IMPLEMENT
-                  }
-                : null,
+            onTap: isAvailable ? () => setState(() => _orderTime = time) : null,
             child: Ink(
               decoration: BoxDecoration(
-                color: isAvailable ? Colors.green : Colors.green[900],
+                color: isAvailable
+                    ? (time == _orderTime ? Colors.green[300] : Colors.green)
+                    : Colors.green[900],
+                border: time == _orderTime
+                    ? Border.all(color: Colors.black54)
+                    : Border(),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -594,9 +657,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   Future<void> _sendOrderDetails() async {
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
     ReactiveModel<Cart> rmCart = Injector.getAsReactive<Cart>();
-    setState(() => _isLoading = true);
+    setState(() => _isPaymentProcessing = true);
 
     Response response = await _firestore.runTransaction((transaction) async {
+      setState(() => _isTimeTableLoading = true);
       DocumentSnapshot scheduleDoc =
           await _firestore.collection("agenda").doc("delivery_schedule").get();
 
@@ -609,10 +673,18 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       double distance =
           _calculateDistanceInMeters(userLat, userLon, centerLat, centerLon);
 
-      if (distance > maxDistance) return Response.NOT_IN_BOUNDS;
+      if (distance > maxDistance) {
+        setState(() => _isTimeTableLoading = false);
+        return Response.NOT_IN_BOUNDS;
+      }
 
       Map<String, bool> availableTimes =
           Map<String, bool>.from(scheduleDoc.data()['available_times']);
+
+      setState(() {
+        _availableTimes = availableTimes;
+        _isTimeTableLoading = false;
+      });
 
       if (availableTimes[_orderTime]) {
         _firestore.collection("orders").doc().set(
@@ -636,13 +708,15 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           {"available_times": availableTimes},
         );
 
+        setState(() => _availableTimes = availableTimes);
+
         return Response.SUCCESS;
       } else {
         return Response.NOT_AVAILABLE;
       }
     });
 
-    setState(() => _isLoading = false);
+    setState(() => _isPaymentProcessing = false);
 
     switch (response) {
       case Response.SUCCESS:
@@ -650,12 +724,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             context: context,
             builder: (_) {
               return AlertDialog(
-                title: Text("Order confirmed"),
-                content: Text("You will recieve the order at $_orderTime"),
+                title: Text("Pedido confirmado"),
+                content: Text("Tu pedido llegará el $_deliveryDay $_orderTime"),
                 actions: [
                   RaisedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text("Dismiss"),
+                    child: Text("Cerrar"),
                   )
                 ],
               );
@@ -675,7 +749,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           builder: (_) {
             return TimeSelectionDialog(
               errorText:
-                  "The time you selected has been booked. Please select a new one.",
+                  "La hora que selectionaste ya ha sido reservada. Porfavor selecciona una nueva.",
             );
           },
         );
@@ -688,12 +762,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             context: context,
             builder: (_) {
               return AlertDialog(
-                title: Text("Not in bounds"),
-                content: Text("Sorry we can't deliver there yet."),
+                title: Text("No hemos llegado aún 😔"),
+                // TODO HACER TEXTO MÁS EXPLICATIVO
+                content: Text("😔 Lo siento aún no realizamos envios ahí."),
                 actions: [
                   RaisedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text("Dismiss"),
+                    child: Text("Cerrar"),
                   )
                 ],
               );
@@ -704,18 +779,36 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             context: context,
             builder: (_) {
               return AlertDialog(
-                title: Text("Unknown error"),
-                content: Text("An unknown error ocurred."),
+                title: Text("Error desconocido"),
+                content: Text(
+                    "Ocurrió un error desconocido. Porfavor vuelve a intentarlo"),
                 actions: [
                   RaisedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text("Dismiss"),
+                    child: Text("Cerrar"),
                   )
                 ],
               );
             });
         break;
     }
+  }
+
+  Future<void> _loadDeliverySchedule() async {
+    DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection("agenda")
+        .doc("delivery_schedule")
+        .get();
+
+    Map docData = doc.data();
+
+    Map<String, bool> unorderedTimes =
+        Map<String, bool>.from(docData['available_times']);
+
+    Map<String, bool> availableTimes =
+        Map.from(SplayTreeMap.from(unorderedTimes));
+
+    setState(() => _availableTimes = availableTimes);
   }
 
   success(pos) => setState(() => _userLocation = pos);

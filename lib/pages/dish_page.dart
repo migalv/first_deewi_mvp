@@ -98,7 +98,7 @@ class DishPage extends StatelessWidget {
               Navigator.pop(context);
 
               Fluttertoast.showToast(
-                msg: "Dish added to cart",
+                msg: "Plato añadido al carrito",
                 webPosition: "center",
                 toastLength: Toast.LENGTH_LONG,
                 gravity: ToastGravity.BOTTOM,
@@ -124,7 +124,7 @@ class DishPage extends StatelessWidget {
                   ),
                   SizedBox(width: 8.0),
                   Text(
-                    "Add to Cart",
+                    "Añadir al carrito",
                     style: Theme.of(context)
                         .textTheme
                         .headline5

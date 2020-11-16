@@ -86,6 +86,7 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
   Widget _buildItemsList(ReactiveModel rmCart) => Expanded(
         child: rmCart.state.dishes.isNotEmpty
             ? ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 children: rmCart.state.dishes.entries
                     .map(
                       (entry) => ItemTile(
@@ -112,7 +113,7 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
           ),
           SizedBox(width: 88.0),
           Text(
-            "Cart",
+            "Carrito",
             style: Theme.of(context).textTheme.headline4,
           ),
         ],
@@ -147,18 +148,18 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.payment,
-                        color: Colors.white,
-                        size: 24.0,
-                      ),
-                      SizedBox(width: 8.0),
                       Text(
-                        "Pay",
+                        "Continuar",
                         style: Theme.of(context)
                             .textTheme
                             .headline5
                             .copyWith(color: Colors.white),
+                      ),
+                      SizedBox(width: 8.0),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white,
+                        size: 24.0,
                       ),
                     ],
                   ),
@@ -176,7 +177,7 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Go add your favorite dishes and come back here to order",
+                "Añade tus platos favoritos y vuelve aquí para realizar el pedido",
                 style: Theme.of(context).textTheme.subtitle1,
                 textAlign: TextAlign.center,
               ),
@@ -188,7 +189,7 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
               Padding(
                 padding: const EdgeInsets.only(left: 16.0),
                 child: Text(
-                  "Empty cart",
+                  "Carro vacio",
                   style: Theme.of(context).textTheme.headline6,
                 ),
               ),

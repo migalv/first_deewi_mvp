@@ -2,7 +2,6 @@ import 'dart:collection';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:first_deewi_mvp/pages/order_confirmation_page.dart';
 import 'package:flutter/material.dart';
 
 class TimeSelectionDialog extends StatefulWidget {

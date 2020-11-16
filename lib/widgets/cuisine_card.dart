@@ -10,11 +10,12 @@ class CuisineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(_borderRadius),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(_borderRadius),
+        elevation: 3,
         child: InkWell(
           onTap: () => Navigator.push(
             context,
@@ -25,12 +26,12 @@ class CuisineCard extends StatelessWidget {
               ),
             ),
           ),
-          borderRadius: BorderRadius.circular(_borderRadius),
+          // borderRadius: BorderRadius.circular(_borderRadius),
           child: Stack(
             children: [
               Ink(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(_borderRadius),
+                  // borderRadius: BorderRadius.circular(_borderRadius),
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
@@ -52,8 +53,9 @@ class CuisineCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.9),
                       borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(_borderRadius),
-                          bottomRight: Radius.circular(_borderRadius)),
+                          // bottomLeft: Radius.circular(_borderRadius),
+                          // bottomRight: Radius.circular(_borderRadius),
+                          ),
                     ),
                     child: Center(
                       child: Hero(

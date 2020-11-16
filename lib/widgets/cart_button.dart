@@ -1,4 +1,3 @@
-import 'package:first_deewi_mvp/pages/cart_page.dart';
 import 'package:first_deewi_mvp/stores/cart.dart';
 import 'package:flutter/material.dart';
 import 'package:states_rebuilder/states_rebuilder.dart';
