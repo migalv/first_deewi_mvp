@@ -83,6 +83,7 @@ class _HomePageState extends State<HomePage> {
               "assets/images/home_banner.png",
               width: _screenWidth,
               height: _screenHeight,
+              alignment: Alignment(0.0, 1.0),
               fit: BoxFit.cover,
             ),
             _buildLogo(),
@@ -150,7 +151,7 @@ class _HomePageState extends State<HomePage> {
               Container(
                 margin: const EdgeInsets.only(bottom: 16.0),
                 child: Text(
-                  "Con que comida te atreves hoy?",
+                  "¿Con qué comidas te atreves hoy?",
                   style: _titleTextStyle,
                   textAlign: TextAlign.center,
                 ),

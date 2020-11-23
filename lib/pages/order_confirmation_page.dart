@@ -9,8 +9,10 @@ import 'package:first_deewi_mvp/widgets/item_tile.dart';
 import 'package:first_deewi_mvp/widgets/my_box_shadow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:js/js.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:states_rebuilder/states_rebuilder.dart';
+import 'package:first_deewi_mvp/services/google_geocoding_service.dart';
 import "dart:math";
 
 class OrderConfirmationPage extends StatefulWidget {
@@ -22,6 +24,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   String _orderTime;
 
   Map<String, bool> _availableTimes;
+
+  final _formKey = GlobalKey<FormState>();
+
+  GoogleGeocodingService _geocodingService;
 
   final _maskFormatter = MaskTextInputFormatter(
     mask: '### ## ## ##',
@@ -72,8 +78,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   @override
   void initState() {
+    _geocodingService = GoogleGeocodingService();
     _isTimeTableLoading = true;
     _isPaymentProcessing = false;
+    getCurrentPosition(allowInterop((pos) => success(pos)));
     _loadDeliverySchedule()
         .then((_) => setState(() => _isTimeTableLoading = false));
     super.initState();
@@ -105,7 +113,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
     _mainContainerTopMargin = 88.0;
     _mainContainerVerticalPadding = 24.0;
-    _timeTableHeight = 128.0;
+
+    _timeTableHeight = 164.0;
 
     _textFieldMaxWidth = _mainContainterWidth * 0.6 -
         _leftContentLeftPadding -
@@ -136,12 +145,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
               fontWeight: FontWeight.bold,
             );
       }
-      if (_screenWidth < 442) {
-        _timeTableHeight = 162.0;
-      }
-      if (_screenWidth < 425) {
-        _mainContainerHorizontalPadding = 16.0;
-      }
+      if (_screenWidth < 425) _mainContainerHorizontalPadding = 16.0;
     }
 
     return Scaffold(
@@ -219,22 +223,25 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             ),
           ],
         ),
-        child: _isWeb
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLeftColumn(),
-                  SizedBox(width: _columnSeparation),
-                  _buildOrderDetailsContainer(
-                      containerWidth: orderDetailsContainer),
-                ],
-              )
-            : Column(
-                children: [
-                  _buildTitle(),
-                  _buildMobileContent(),
-                ],
-              ),
+        child: Form(
+          key: _formKey,
+          child: _isWeb
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLeftColumn(),
+                    SizedBox(width: _columnSeparation),
+                    _buildOrderDetailsContainer(
+                        containerWidth: orderDetailsContainer),
+                  ],
+                )
+              : Column(
+                  children: [
+                    _buildTitle(),
+                    _buildMobileContent(),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -390,9 +397,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                   hintText: "Calle Hong Kong, num 26, piso 3A",
                   icon: IconButton(
                     padding: const EdgeInsets.all(0.0),
-                    onPressed: () {
-                      // TODO IMPLEMENT
-                    },
+                    onPressed: () => _getUserLocation(),
                     icon: Icon(Icons.location_on),
                   ),
                   border: OutlineInputBorder(),
@@ -505,7 +510,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           padding: const EdgeInsets.all(16.0),
           child: Material(
             child: InkWell(
-              onTap: () => _sendOrderDetails(),
+              onTap: () => _tryPayment(),
               child: Ink(
                 padding:
                     const EdgeInsets.symmetric(vertical: 8.0, horizontal: 40.0),
@@ -523,7 +528,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ),
                     SizedBox(width: 8.0),
                     _isPaymentProcessing
-                        ? Center(child: CircularProgressIndicator())
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
                         : Text(
                             "Pagar",
                             style: Theme.of(context)
@@ -571,67 +582,91 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       );
 
   Widget _buildTimeTable() {
-    Widget timeTableWidget = Container(
-      margin: EdgeInsets.symmetric(
-        vertical: 8.0,
-        horizontal: _isWeb ? 16.0 : 0.0,
-      ),
-      padding: const EdgeInsets.symmetric(
-        vertical: 16.0,
-        horizontal: 24.0,
-      ),
-      height: _timeTableHeight,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: [
-          myBoxShadow,
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _deliveryDay,
-            style: Theme.of(context).textTheme.headline6,
+    Widget timeTableWidget = FormField(
+      validator: (value) =>
+          value == null ? "Porfavor selecciona una hora de entrega" : null,
+      builder: (state) {
+        return Container(
+          margin: EdgeInsets.symmetric(
+            vertical: 8.0,
+            horizontal: _isWeb ? 16.0 : 0.0,
           ),
-          _isTimeTableLoading
-              ? Center(child: CircularProgressIndicator())
-              : Expanded(
-                  child: Wrap(
-                    runAlignment: WrapAlignment.spaceEvenly,
-                    children: _availableTimes.entries
-                        .map((entry) => _buildTimeChip(entry.key, entry.value))
-                        .cast<Widget>()
-                        .toList(),
-                  ),
-                ),
-        ],
-      ),
+          padding: const EdgeInsets.symmetric(
+            vertical: 16.0,
+            horizontal: 24.0,
+          ),
+          height: _timeTableHeight + (state.hasError ? 17.0 : 0.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16.0),
+            boxShadow: [
+              myBoxShadow,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _deliveryDay,
+                style: Theme.of(context).textTheme.headline6,
+              ),
+              _isTimeTableLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : Wrap(
+                      runAlignment: WrapAlignment.spaceEvenly,
+                      children: _availableTimes.entries
+                          .map((entry) =>
+                              _buildTimeChip(entry.key, entry.value, state))
+                          .cast<Widget>()
+                          .toList(),
+                    ),
+              state.hasError
+                  ? Text(
+                      state.errorText,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12.0),
+                    )
+                  : Container(),
+            ],
+          ),
+        );
+      },
     );
 
     return _isWeb ? timeTableWidget : Center(child: timeTableWidget);
   }
 
-  Widget _buildTimeChip(String time, bool isAvailable) => Padding(
+  Widget _buildTimeChip(String time, bool isAvailable, FormFieldState state) =>
+      Padding(
         padding: const EdgeInsets.all(8.0),
         child: Material(
-          elevation: 2,
+          elevation: time == _orderTime ? 4 : 2,
           borderRadius: BorderRadius.circular(8.0),
           child: InkWell(
-            onTap: isAvailable ? () => setState(() => _orderTime = time) : null,
+            onTap: isAvailable
+                ? () {
+                    state.didChange(time);
+                    setState(() => _orderTime = time);
+                  }
+                : null,
             child: Ink(
               decoration: BoxDecoration(
                 color: isAvailable
-                    ? (time == _orderTime ? Colors.green[300] : Colors.green)
+                    ? (time == _orderTime ? Colors.amber : Colors.green)
                     : Colors.green[900],
-                border: time == _orderTime
-                    ? Border.all(color: Colors.black54)
-                    : Border(),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text(time),
+                child: Text(
+                  time,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: time == _orderTime
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
               ),
             ),
           ),
@@ -654,143 +689,215 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     return d;
   }
 
-  Future<void> _sendOrderDetails() async {
+  Future<void> _tryPayment() async {
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
     ReactiveModel<Cart> rmCart = Injector.getAsReactive<Cart>();
-    setState(() => _isPaymentProcessing = true);
 
-    Response response = await _firestore.runTransaction((transaction) async {
-      setState(() => _isTimeTableLoading = true);
-      DocumentSnapshot scheduleDoc =
-          await _firestore.collection("agenda").doc("delivery_schedule").get();
+    getCurrentPosition(allowInterop((pos) => success(pos)));
 
-      double userLat = _userLocation.coords.latitude;
-      double userLon = _userLocation.coords.longitude;
-      double centerLat = scheduleDoc.data()["center_coords"]["lat"];
-      double centerLon = scheduleDoc.data()["center_coords"]["lon"];
-      double maxDistance = scheduleDoc.data()["max_meters"];
-
-      double distance =
-          _calculateDistanceInMeters(userLat, userLon, centerLat, centerLon);
-
-      if (distance > maxDistance) {
-        setState(() => _isTimeTableLoading = false);
-        return Response.NOT_IN_BOUNDS;
-      }
-
-      Map<String, bool> availableTimes =
-          Map<String, bool>.from(scheduleDoc.data()['available_times']);
-
-      setState(() {
-        _availableTimes = availableTimes;
-        _isTimeTableLoading = false;
-      });
-
-      if (availableTimes[_orderTime]) {
-        _firestore.collection("orders").doc().set(
-          {
-            "items": rmCart.state.dishes.entries
-                .map((entry) => entry.key.toJson())
-                .toList(),
-            "created_at": DateTime.now().millisecondsSinceEpoch,
-            "delivery_time": _orderTime,
-            "client_address": _addressController.text,
-            "client_name": _nameController.text,
-            "client_email": _emailController.text,
-            "client_phone": _phoneController.text,
-            "total_price": rmCart.state.totalPrice,
-          },
-        );
-
-        availableTimes[_orderTime] = false;
-
-        _firestore.collection("agenda").doc("delivery_schedule").update(
-          {"available_times": availableTimes},
-        );
-
-        setState(() => _availableTimes = availableTimes);
-
-        return Response.SUCCESS;
-      } else {
-        return Response.NOT_AVAILABLE;
-      }
-    });
-
-    setState(() => _isPaymentProcessing = false);
-
-    switch (response) {
-      case Response.SUCCESS:
-        await showDialog(
-            context: context,
-            builder: (_) {
-              return AlertDialog(
-                title: Text("Pedido confirmado"),
-                content: Text("Tu pedido llegará el $_deliveryDay $_orderTime"),
-                actions: [
-                  RaisedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text("Cerrar"),
-                  )
-                ],
-              );
-            });
-        rmCart.setState((cart) => cart.clear());
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => HomePage(),
+    if (_formKey.currentState.validate()) {
+      if (_userLocation == null) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text("Activa la localización"),
+            content: Text("Porfavor activa la localización para continuar."),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: RaisedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("OK"),
+                ),
+              )
+            ],
           ),
         );
-        break;
-      case Response.NOT_AVAILABLE:
-        String selectedTime = await showDialog(
-          context: context,
-          builder: (_) {
-            return TimeSelectionDialog(
-              errorText:
-                  "La hora que selectionaste ya ha sido reservada. Porfavor selecciona una nueva.",
-            );
-          },
-        );
+        return;
+      }
 
-        setState(() => _orderTime = selectedTime);
+      setState(() => _isPaymentProcessing = true);
 
-        break;
-      case Response.NOT_IN_BOUNDS:
-        showDialog(
+      Response response = await _firestore.runTransaction((transaction) async {
+        setState(() => _isTimeTableLoading = true);
+        DocumentSnapshot scheduleDoc = await _firestore
+            .collection("agenda")
+            .doc("delivery_schedule")
+            .get();
+
+        double userLat = _userLocation.coords.latitude;
+        double userLon = _userLocation.coords.longitude;
+        double centerLat = scheduleDoc.data()["center_coords"]["lat"];
+        double centerLon = scheduleDoc.data()["center_coords"]["lon"];
+        double maxDistance = scheduleDoc.data()["max_meters"];
+
+        double distance =
+            _calculateDistanceInMeters(userLat, userLon, centerLat, centerLon);
+
+        print(distance);
+
+        if (distance > maxDistance) {
+          setState(() => _isTimeTableLoading = false);
+          return Response.NOT_IN_BOUNDS;
+        }
+
+        Map<String, bool> availableTimes =
+            Map<String, bool>.from(scheduleDoc.data()['available_times']);
+
+        setState(() {
+          _availableTimes = availableTimes;
+          _isTimeTableLoading = false;
+        });
+
+        if (availableTimes[_orderTime]) {
+          _firestore.collection("orders").doc().set(
+            {
+              "items": rmCart.state.dishes.entries
+                  .map((entry) => entry.key.toJson())
+                  .toList(),
+              "created_at": DateTime.now().millisecondsSinceEpoch,
+              "delivery_time": _orderTime,
+              "client_address": _addressController.text,
+              "client_name": _nameController.text,
+              "client_email": _emailController.text,
+              "client_phone": _phoneController.text,
+              "total_price": rmCart.state.totalPrice,
+            },
+          );
+
+          availableTimes[_orderTime] = false;
+
+          _firestore.collection("agenda").doc("delivery_schedule").update(
+            {"available_times": availableTimes},
+          );
+
+          setState(() => _availableTimes = availableTimes);
+
+          return Response.SUCCESS;
+        } else {
+          return Response.NOT_AVAILABLE;
+        }
+      });
+
+      setState(() => _isPaymentProcessing = false);
+
+      switch (response) {
+        case Response.SUCCESS:
+          await showDialog(
+              context: context,
+              builder: (_) {
+                return AlertDialog(
+                  title: Text("Pedido confirmado"),
+                  content:
+                      Text("Tu pedido llegará el $_deliveryDay $_orderTime"),
+                  actions: [
+                    RaisedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text("Cerrar"),
+                    )
+                  ],
+                );
+              });
+          rmCart.setState((cart) => cart.clear());
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HomePage(),
+            ),
+          );
+          break;
+        case Response.NOT_AVAILABLE:
+          String selectedTime = await showDialog(
             context: context,
             builder: (_) {
-              return AlertDialog(
-                title: Text("No hemos llegado aún 😔"),
-                // TODO HACER TEXTO MÁS EXPLICATIVO
-                content: Text("😔 Lo siento aún no realizamos envios ahí."),
-                actions: [
-                  RaisedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text("Cerrar"),
-                  )
-                ],
+              return TimeSelectionDialog(
+                errorText:
+                    "La hora que selectionaste ya ha sido reservada. Porfavor selecciona una nueva.",
               );
-            });
-        break;
-      default:
-        showDialog(
-            context: context,
-            builder: (_) {
-              return AlertDialog(
-                title: Text("Error desconocido"),
-                content: Text(
-                    "Ocurrió un error desconocido. Porfavor vuelve a intentarlo"),
-                actions: [
-                  RaisedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text("Cerrar"),
-                  )
-                ],
-              );
-            });
-        break;
+            },
+          );
+
+          setState(() => _orderTime = selectedTime);
+
+          break;
+        case Response.NOT_IN_BOUNDS:
+          showDialog(
+              context: context,
+              builder: (_) {
+                return AlertDialog(
+                  title: Text("No hemos llegado aún 😔"),
+                  // TODO HACER TEXTO MÁS EXPLICATIVO
+                  content: Text("😔 Lo siento aún no realizamos envios ahí."),
+                  actions: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RaisedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text("Cerrar"),
+                      ),
+                    )
+                  ],
+                );
+              });
+          break;
+        default:
+          showDialog(
+              context: context,
+              builder: (_) {
+                return AlertDialog(
+                  title: Text("Error desconocido"),
+                  content: Text(
+                      "Ocurrió un error desconocido. Porfavor vuelve a intentarlo"),
+                  actions: [
+                    RaisedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text("Cerrar"),
+                    )
+                  ],
+                );
+              });
+          break;
+      }
+    }
+  }
+
+  void _getUserLocation() {
+    getCurrentPosition(allowInterop((pos) => success(pos)));
+
+    if (_userLocation != null) {
+      _geocodingService
+          .getLocationOptionsFromCoords(
+        _userLocation.coords.latitude,
+        _userLocation.coords.longitude,
+      )
+          .then(
+        (optionList) {
+          setState(() {
+            if (optionList.isNotEmpty) {
+              _addressController.text = optionList.first;
+            }
+          });
+        },
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text("Activa la localización"),
+          content: Text(
+              "Porfavor activa la localización en tu navegador para continuar."),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: RaisedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("OK"),
+              ),
+            )
+          ],
+        ),
+      );
     }
   }
 

@@ -35,7 +35,9 @@ class DishPage extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   Image.asset(
-                    dish.imagePath,
+                    dish.sideViewImage != null
+                        ? dish.mainImage
+                        : dish.mainImage,
                     fit: BoxFit.cover,
                   ),
                   const DecoratedBox(
@@ -57,24 +59,35 @@ class DishPage extends StatelessWidget {
           SliverList(
             delegate: SliverChildListDelegate(
               [
-                Center(
-                  child: Container(
-                    width: _descriptionWidth,
-                    margin: EdgeInsets.symmetric(
-                      vertical: 24.0,
-                    ),
-                    child: Text(
-                      dish.description,
-                      textAlign: TextAlign.justify,
-                    ),
-                  ),
+                SizedBox(height: 16.0),
+                // Description
+                _buildParagraph(
+                  context: context,
+                  descriptionWidth: _descriptionWidth,
+                  title: "Descripción del plato",
+                  text: dish.description,
                 ),
-                Center(
-                  child: Text(
-                    "${dish.priceAsString}€",
-                    style: Theme.of(context).textTheme.headline4,
-                  ),
-                ),
+                // History
+                dish.history != null
+                    ? _buildParagraph(
+                        context: context,
+                        descriptionWidth: _descriptionWidth,
+                        title: "Un poco de historia",
+                        text: dish.history,
+                      )
+                    : Container(),
+                // How to eat
+                dish.howToEat != null
+                    ? _buildParagraph(
+                        context: context,
+                        descriptionWidth: _descriptionWidth,
+                        title: "Como comer",
+                        text: dish.howToEat)
+                    : Container(),
+                SizedBox(height: 16.0),
+                _buildDishIngredients(context, _descriptionWidth),
+                SizedBox(height: 24.0),
+                _buildPrice(context),
                 Center(
                   child: _buildAddToCartButton(context),
                 ),
@@ -85,6 +98,101 @@ class DishPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildParagraph(
+          {@required BuildContext context,
+          @required double descriptionWidth,
+          @required String title,
+          @required String text}) =>
+      Center(
+        child: Column(
+          children: [
+            Container(
+              width: descriptionWidth,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.headline5,
+              ),
+            ),
+            SizedBox(height: 16.0),
+            Center(
+              child: Container(
+                width: descriptionWidth,
+                child: Text(
+                  text,
+                  softWrap: true,
+                  textAlign: TextAlign.justify,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildDishIngredients(BuildContext context, double descriptionWidth) {
+    if (dish.ingredients.isNotEmpty) {
+      List<Widget> children = [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Ingredientes",
+            style: Theme.of(context).textTheme.headline5,
+          ),
+        ),
+        SizedBox(height: 16.0),
+      ];
+
+      children.addAll(
+        dish.ingredients.map(
+          (ingredient) => ingredient.allergens != null
+              ? ListTile(
+                  title: Text(
+                    ingredient.name,
+                    style: Theme.of(context).textTheme.subtitle1,
+                  ),
+                  subtitle: Text(
+                    "Alergenos: ${ingredient.allergens.join(", ")}",
+                    style: TextStyle(color: Colors.red[900]),
+                  ),
+                )
+              : ListTile(
+                  title: Text(
+                    ingredient.name,
+                    style: Theme.of(context).textTheme.subtitle1,
+                  ),
+                ),
+        ),
+      );
+
+      return Center(
+        child: Container(
+          width: descriptionWidth,
+          child: Column(
+            children: children,
+          ),
+        ),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  Widget _buildPrice(BuildContext context) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            "${dish.priceAsString}€",
+            style: Theme.of(context).textTheme.headline4,
+          ),
+          SizedBox(width: 16.0),
+          Text(
+            dish.isSoldInUnits ? "Por unidad" : "",
+            style: Theme.of(context).textTheme.caption,
+          ),
+        ],
+      );
 
   Widget _buildAddToCartButton(BuildContext context) => Padding(
         padding: const EdgeInsets.all(16.0),

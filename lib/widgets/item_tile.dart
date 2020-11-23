@@ -38,7 +38,7 @@ class ItemTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8.0),
                   image: DecorationImage(
-                    image: AssetImage(dish.imagePath),
+                    image: AssetImage(dish.mainImage),
                     fit: BoxFit.cover,
                   ),
                 ),

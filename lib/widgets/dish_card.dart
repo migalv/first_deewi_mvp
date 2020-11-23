@@ -43,7 +43,7 @@ class DishCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(_borderRadius),
               image: DecorationImage(
-                image: AssetImage(dish.imagePath),
+                image: AssetImage(dish.mainImage),
                 fit: BoxFit.cover,
               ),
               boxShadow: [

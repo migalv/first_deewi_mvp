@@ -11,4 +11,10 @@ class Cuisine {
     @required this.dishes,
     @required this.imagePath,
   });
+
+  Map<String, dynamic> toJson() => {
+        "cuisine_name": this.name,
+        "dishes": dishes.map((dish) => dish.toJson()).toList(),
+        "image_path": this.imagePath,
+      };
 }
