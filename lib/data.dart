@@ -51,6 +51,11 @@ final List<Cuisine> cuisines = [
     dishes: peruanDishes,
     imagePath: "assets/images/cuisine_images/peru.jpg",
   ),
+  Cuisine(
+    name: "Francesa",
+    dishes: frenchDishes,
+    imagePath:,
+  ),
 ];
 
 final List<Dish> japaneseDishes = [
@@ -305,5 +310,59 @@ La historia del chicharrón se inicia con los negros traídos al imperio Inca po
     """,
     mainImage: "assets/images/dish_images/peru/chicharrón.jpg",
     price: 13,
+  ),
+];
+
+final List<Dish> frenchDishes = [
+  Dish(
+   name: "Beouf bourguignon",
+    ingredients: [
+      Ingredient(name: "Carne de ternera para guisar"),
+      Ingredient(name: "Vino tinto"),
+      Ingredient(name: "Cebolla"),
+      Ingredient(name: "Zanahoria"),
+      Ingredient(name: "Perejil"),
+      Ingredient(name: "Bacon"),
+      Ingredient(name: "Harina de trigo", allergens: ["Gluten"])
+      Ingredient(name: "Mantequilla", allergens: ["Leche"])
+      Ingredient(name: "Champiñones"),
+      Ingredient(name: "Caldo de carne"),
+      Ingredient(name: "Tomate"),
+      Ingredient(name: "Aceite de oliva"),
+      Ingredient(name: "Sal"),
+      Ingredient(name: "Pimienta negra"),
+    ],
+    howToEat:
+        "Caliente. Usar tenedor y cuchillo o cuchara",
+    description: """
+Estofado de ternera tradicional francés que se prepara a fuego lento en vino tinto servido con zanhaoria, patata y champiñones.
+    """,
+    history: """
+El chef Auguste Escoffier, que publicó por primera vez la receta en el principios de los 20 º siglo. Con el tiempo, la receta evolucionó de la comida campesina honesta a la alta cocina, y la receta de 1903 de Escoffier se convirtió en el abanderado, utilizando un trozo entero de ternera en el estofado. Mucho más tarde, Julia Child usó cubos de ternera en lugar de una pieza entera, lo que llevó al boeuf Bourguignon a la atención de toda una nueva generación de cocineros.    """,
+    mainImage:,
+    price: 8,50€,
+  ),
+  Dish(
+   name: "Crêpe Paul Bocuse fraise at chocolat",
+    ingredients: [
+      Ingredient(name: "Mantequilla",allergens: ["Leche"])
+      Ingredient(name: "Harina de trigo",allergens: ["Gluten"])
+      Ingredient(name: "Azúcar glas"),
+      Ingredient(name: "Sal"),
+      Ingredient(name: "Huevos"),
+      Ingredient(name: "Leche",allergens: ["Leche"])
+      Ingredient(name: "Aceite de oliva"), 
+      Ingredient(name: "Mantequilla", allergens: ["Leche"])
+      Ingredient(name: "Nutella",allergens: ["Frutos secos"])
+      Ingredient(name: "Fresas"),
+    ],
+    howToEat:
+        "Frío. comer con cuchillo y tenedor.",
+    description: """
+Masa fina preparada con harina, huevos, mantequilla y leche rellena de fresa y nutella    """,
+    history: """
+Masa fina preparada con harina, huevos, mantequilla y leche rellena de fresa y nutella    """,
+    mainImage:,
+    price: 4€,
   ),
 ];
